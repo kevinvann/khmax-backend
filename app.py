@@ -105,11 +105,19 @@ def tax_prices():
     year_columns = [str(year) for year in range(2016, 2026)]
     available_years = [col for col in year_columns if col in df.columns]
 
+    def clean_value(val):
+        if pd.isna(val):
+            return None
+        val_str = str(val).replace(',', '').strip()
+        if val_str in ['', '-', 'N/A']:
+            return None
+        try:
+            return int(val_str)
+        except ValueError:
+            return None
+
     tax_data = filtered.iloc[0][available_years].to_dict()
-    tax_data = {
-        year: int(str(val).replace(',', '')) if pd.notna(val) and str(val).strip() != '' else None
-        for year, val in tax_data.items()
-    }
+    tax_data = {year: clean_value(val) for year, val in tax_data.items()}
     return jsonify(tax_data)
 
 # More endpoints (e.g., years, engines) can follow the same structure
