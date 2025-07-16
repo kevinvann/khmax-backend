@@ -79,6 +79,36 @@ def get_engines():
 
     return jsonify(sorted(engines))
 
+@app.route('/tax_prices', methods=['GET'])
+def tax_prices():
+    make = request.args.get('make')
+    model = request.args.get('model')
+    type = request.args.get('type')
+    country = request.args.get('country')
+    engine = request.args.get('engine')
+
+    for field, value in [('make', make), ('model', model), ('type', type), ('country', country), ('engine', engine)]:
+        if not value:
+            return jsonify({'error': f'Missing {field} parameter'}), 400
+
+    filtered = df[
+        (df['make'] == make) &
+        (df['model'] == model) &
+        (df['type'] == type) &
+        (df['country'] == country) &
+        (df['engine'] == engine)
+    ]
+
+    if filtered.empty:
+        return jsonify({'error': 'No matching record found'}), 404
+
+    year_columns = [str(year) for year in range(2016, 2026)]
+    available_years = [col for col in year_columns if col in df.columns]
+
+    tax_prices = filtered.iloc[0][available_years].to_dict()
+
+    return jsonify(sorted(tax_prices))
+
 # More endpoints (e.g., years, engines) can follow the same structure
 
 if __name__ == '__main__':
